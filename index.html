@@ -38,6 +38,14 @@
               el.className = "thumb"
               el.setAttribute("src", img.url)
               frame.appendChild(el)
+              const x = document.createElement("a")
+              x.className = "x"
+              x.innerHTML = "Ⓧ"
+              x.onclick = () => {
+                document.imgs.splice(i, 1)
+                document.createPDF()
+              }
+              frame.appendChild(x)
               thumbs.appendChild(frame)
 
               if (i !== 0) doc.addPage()
@@ -102,6 +110,12 @@
       .thumb {
         border: black 1px solid;
         max-height: 128px;
+      }
+      .x {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        cursor: pointer;
       }
     </style>
   </head>
