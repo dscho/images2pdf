@@ -75,7 +75,9 @@
               if (i !== 0) doc.addPage()
               if (!img.landscape) {
                 doc.image(img.url, pad, pad, {
-                  fit: [ pageWidth - 2 * pad, pageHeight - 2 * pad ]
+                  fit: [ pageWidth - 2 * pad, pageHeight - 2 * pad ],
+                  align: "center",
+                  valign: "center"
                 })
               } else {
                 const dx = pageWidth * Math.sqrt(2) / 2
@@ -83,7 +85,9 @@
                   .translate(0, pageHeight)
                   .rotate(-90)
                   .image(img.url, pad, pad, {
-                    fit: [ pageHeight  - 2 * pad, pageWidth- 2 * pad ]
+                    fit: [ pageHeight  - 2 * pad, pageWidth- 2 * pad ],
+                    align: "center",
+                    valign: "center"
                   })
               }
             })
