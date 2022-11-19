@@ -29,20 +29,20 @@
           }
         }
 
-        document.createPDF = async () => {
+        const scheduleRedraw = () => {
+          document.redrawScheduled = 1
+          setTimeout(() => {
+            if (document.redrawScheduled) {
+              redraw(false).then(() => { document.redrawScheduled = false })
+            }
+          }, 50)
+        }
+
+        const redraw = async (redoThumbnails) => {
           const thumbs = document.getElementById("thumbs")
-          thumbs.innerHTML = ""
 
-          const doc = new PDFDocument({ size: 'A4' })
-
-          // pipe the PDF to a blob
-          const stream = doc.pipe(blobStream())
-
-          if (document.imgs.length === 0) {
-            doc
-              .fontSize(48)
-              .text("Try to paste an image!", 15, 15)
-          } else {
+          if (redoThumbnails) {
+            thumbs.innerHTML = ""
             document.imgs.forEach((img, i) => {
               const frame = document.createElement("div")
               frame.className = "frame"
@@ -55,7 +55,8 @@
               x.innerHTML = "Ⓧ"
               x.onclick = () => {
                 document.imgs.splice(i, 1)
-                document.createPDF()
+                thumbs.removeChild(frame)
+                scheduleRedraw()
               }
               frame.appendChild(x)
               const landscapeToggle = document.createElement("a")
@@ -67,11 +68,23 @@
                 }
                 img.landscape = !img.landscape
                 toggleLandscape(landscapeToggle, frame, el, img.landscape, img.landscapePadding)
-                document.createPDF()
+                scheduleRedraw()
               }
               frame.appendChild(landscapeToggle)
               thumbs.appendChild(frame)
+            })
+          }
 
+          const doc = new PDFDocument({ size: 'A4' })
+          // pipe the PDF to a blob
+          const stream = doc.pipe(blobStream())
+          if (document.imgs.length === 0) {
+            thumbs.innerHTML = ""
+            doc
+              .fontSize(48)
+              .text("Try to paste an image!", 15, 15)
+          } else {
+            document.imgs.forEach((img, i) => {
               if (i !== 0) doc.addPage()
               if (!img.landscape) {
                 doc.image(img.url, pad, pad, {
@@ -92,7 +105,6 @@
               }
             })
           }
-
           doc.end()
 
           return new Promise((resolve, reject) => {
@@ -112,6 +124,10 @@
               reject(e)
             }
           })
+        }
+
+        document.createPDF = async () => {
+          await redraw(true)
         }
 
         const getDataUri = async (url) => {
