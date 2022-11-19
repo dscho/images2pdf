@@ -48,6 +48,27 @@
               frame.className = "frame"
               const el = document.createElement("img")
               el.className = "thumb"
+              let landscapeToggle
+              if (!img.landscapePadding) {
+                el.onload = () => {
+                  img.landscapePadding = `${Math.max(0, el.offsetHeight - el.offsetWidth) / 2}px`
+                  const w = el.naturalWidth
+                  const h = el.naturalHeight
+                  if (w > 0 && h > 0) {
+                    const pw = pageWidth - 2 * pad
+                    const ph = pageHeight - 2 * pad
+                    const portraitFactor = w * ph > h * pw ? pw / w : ph / h
+                    const landscapeFactor = h * ph > w * pw ? pw / h : ph / w
+                    img.landscape = landscapeFactor > portraitFactor
+                    if (img.landscape) {
+                      toggleLandscape(landscapeToggle, frame, el, img.landscape, img.landscapePadding)
+                      scheduleRedraw()
+                    }
+                  } else {
+                    img.landscape = false
+                  }
+                }
+              }
               el.setAttribute("src", img.url)
               frame.appendChild(el)
               const x = document.createElement("a")
@@ -59,13 +80,11 @@
                 scheduleRedraw()
               }
               frame.appendChild(x)
-              const landscapeToggle = document.createElement("a")
+
+              landscapeToggle = document.createElement("a")
               landscapeToggle.className = "landscapeToggle"
               toggleLandscape(landscapeToggle, frame, el, img.landscape, img.landscapePadding)
               landscapeToggle.onclick = () => {
-                if (!img.landscapePadding) {
-                  img.landscapePadding = `${Math.max(0, el.offsetHeight - el.offsetWidth) / 2}px`
-                }
                 img.landscape = !img.landscape
                 toggleLandscape(landscapeToggle, frame, el, img.landscape, img.landscapePadding)
                 scheduleRedraw()
