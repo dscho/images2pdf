@@ -1,0 +1,85 @@
+<html>
+  <!--
+  vim: ts=2 sts=2 sw=2 expandtab:
+  -->
+  <head>
+    <title>Paste images into PDF</title>
+    <!-- https://github.com/foliojs/pdfkit/releases/download/v0.12.1/pdfkit.standalone.js -->
+    <script src="./pdfkit.standalone.js"></script>
+    <!-- https://github.com/devongovett/blob-stream/releases/download/v0.1.3/blob-stream.js -->
+    <script src="./blob-stream.js"></script>
+    <script>
+      (async () => {
+        document.imgs = []
+
+        const pad = 15
+        // A4
+        const pageWidth = 595.28
+        const pageHeight = 841.89
+
+        document.createPDF = async () => {
+          const doc = new PDFDocument({ size: 'A4' })
+
+          // pipe the PDF to a blob
+          const stream = doc.pipe(blobStream())
+
+          if (document.imgs.length === 0) {
+            doc
+              .fontSize(48)
+              .text("Try to paste an image!", 15, 15)
+          } else {
+            document.imgs.forEach((img, i) => {
+              if (i !== 0) doc.addPage()
+              doc.image(img.url, pad, pad, {
+                fit: [ pageWidth - 2 * pad, pageHeight - 2 * pad ]
+              })
+            })
+          }
+
+          doc.end()
+
+          return new Promise((resolve, reject) => {
+            try {
+              stream.on("finish", () => {
+                try {
+                  // display PDF
+                  const url = stream.toBlobURL("application/pdf")
+                  const iframe = document.getElementById("iframe")
+                  iframe.src = url
+                  resolve()
+                } catch (e) {
+                  reject(e)
+                }
+              })
+            } catch (e) {
+              reject(e)
+            }
+          })
+        }
+
+        document.onpaste = (e) => {
+          const toLoad = new Set()
+          for (const item of e.clipboardData.items) {
+            if (item.type.indexOf("image") === 0) {
+              toLoad.add(item)
+              const blob = item.getAsFile()
+              const reader = new FileReader()
+              reader.onload = (e) => {
+                document.imgs.push({ url: e.target.result })
+                toLoad.delete(item)
+                if (toLoad.size === 0) document.createPDF()
+              }
+              reader.readAsDataURL(blob)
+            }
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", document.createPDF)
+      })().catch(console.log)
+    </script>
+  </head>
+  <body>
+    <h1>Paste images into a PDF</h1>
+    <iframe id="iframe" width="100%" height="90%"></iframe>
+  </body>
+</html>
