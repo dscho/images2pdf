@@ -17,6 +17,18 @@
         const pageWidth = 595.28
         const pageHeight = 841.89
 
+        const toggleLandscape = (toggle, frame, img, landscape, landscapePadding) => {
+          if (landscape) {
+            toggle.innerHTML = "↻"
+            if (landscapePadding) frame.style.paddingLeft = frame.style.paddingRight = landscapePadding
+            img.setAttribute("style", "transform: rotate(-90deg);")
+          } else {
+            toggle.innerHTML = "↺"
+            frame.style.paddingLeft = frame.style.paddingRight = '0px'
+            img.setAttribute("style", "transform: none;")
+          }
+        }
+
         document.createPDF = async () => {
           const thumbs = document.getElementById("thumbs")
           thumbs.innerHTML = ""
@@ -46,12 +58,34 @@
                 document.createPDF()
               }
               frame.appendChild(x)
+              const landscapeToggle = document.createElement("a")
+              landscapeToggle.className = "landscapeToggle"
+              toggleLandscape(landscapeToggle, frame, el, img.landscape, img.landscapePadding)
+              landscapeToggle.onclick = () => {
+                if (!img.landscapePadding) {
+                  img.landscapePadding = `${Math.max(0, el.offsetHeight - el.offsetWidth) / 2}px`
+                }
+                img.landscape = !img.landscape
+                toggleLandscape(landscapeToggle, frame, el, img.landscape, img.landscapePadding)
+                document.createPDF()
+              }
+              frame.appendChild(landscapeToggle)
               thumbs.appendChild(frame)
 
               if (i !== 0) doc.addPage()
-              doc.image(img.url, pad, pad, {
-                fit: [ pageWidth - 2 * pad, pageHeight - 2 * pad ]
-              })
+              if (!img.landscape) {
+                doc.image(img.url, pad, pad, {
+                  fit: [ pageWidth - 2 * pad, pageHeight - 2 * pad ]
+                })
+              } else {
+                const dx = pageWidth * Math.sqrt(2) / 2
+                doc
+                  .translate(0, pageHeight)
+                  .rotate(-90)
+                  .image(img.url, pad, pad, {
+                    fit: [ pageHeight  - 2 * pad, pageWidth- 2 * pad ]
+                  })
+              }
             })
           }
 
@@ -115,6 +149,12 @@
         position: absolute;
         top: 0px;
         right: 0px;
+        cursor: pointer;
+      }
+      .landscapeToggle {
+        position: absolute;
+        top: 0px;
+        left: 0px;
         cursor: pointer;
       }
     </style>
